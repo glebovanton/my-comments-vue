@@ -1,7 +1,7 @@
 <template>
     <div class="comments-section">
         <transition name="appear">
-            <ConfirmationModal v-if='confirmModal' @confirm='removeComment(selectedCommentIndex)'
+            <ConfirmationModal v-if='showConfirmModal' @confirm='removeComment(selectedCommentIndex)'
                                @cancel="cancelRemove"/>
         </transition>
         <form name="comment-form" method="post" action="" v-on:submit.prevent="addComment">
@@ -12,15 +12,15 @@
         <div class="comments-lists" v-if="lists.length">
             <h2>Comments:</h2>
             <ul>
-                <li v-for="(list,index) in lists" :key="index">
+                <li v-for="(item,index) in lists" :key="index">
                     <ProfileLink
-                            :nickName="list.user"
-                            :avatarUrl="list.avatarUrl"
+                            :nickName="item.user"
+                            :avatarUrl="item.avatarUrl"
                     />
-                    <span class="comment" contenteditable="false" @keydown.enter="updateComment($event, list)"
-                          @blur="updateComment($event, list)" @click="list.isSelect=!list.isSelect"
-                          ref="comment">{{list.comment}}</span>
-                    <div class="buttons-wrap" v-if="list.isSelect">
+                    <span class="item" contenteditable="false" @keydown.enter="updateComment($event, index)"
+                          @blur="updateComment($event, index)" @click="item.isSelect=!item.isSelect"
+                          ref="comment">{{item.comment}}</span>
+                    <div class="buttons-wrap" v-if="item.isSelect">
                         <Button buttonName="Edit" @click.native="editComment(index)"/>
                         <Button buttonName="delete" bgColor="red" @click.native="confirmRemove(index)"/>
                     </div>
@@ -87,7 +87,7 @@
                     }
                 ],
                 hasError: false,
-                confirmModal: false,
+                showConfirmModal: false,
                 selectedCommentIndex: null
             }
         },
@@ -108,30 +108,28 @@
                 this.addCommentInput = ''
             },
             editComment(index) {
-
                 const selectedComment = this.$refs.comment[index]
-                selectedComment.setAttribute("contenteditable", true);
+                selectedComment.setAttribute("contenteditable", true)
                 selectedComment.focus()
             },
-            updateComment(e, list) {
+            updateComment(e, index) {
                 e.preventDefault()
-                list.comment = e.target.innerText
-                e.target.setAttribute("contenteditable", false);
+                this.$set(this.lists[index],'comment',e.target.innerText)
+                e.target.setAttribute("contenteditable", false)
                 e.target.blur()
             },
             confirmRemove(index) {
-                this.selectedCommentIndex = index;
-                this.confirmModal = true;
+                this.selectedCommentIndex = index
+                this.showConfirmModal = true
             },
             cancelRemove() {
-                this.confirmModal = false;
-                this.selectedCommentIndex = null;
+                this.showConfirmModal = false
+                this.selectedCommentIndex = null
             },
             removeComment(index) {
-                this.lists.splice(index, 1);
-                // e.target.blur()
-                this.selectedCommentIndex = null;
-                this.confirmModal = false;
+                this.$delete(this.lists, index)
+                this.selectedCommentIndex = null
+                this.showConfirmModal = false
             }
         }
     }
@@ -212,6 +210,9 @@
 
                     span.comment {
                         cursor: pointer;
+                        width: 30vw;
+                        overflow: hidden;
+                        text-align: left;
                     }
 
                     .buttons-wrap {
